@@ -1,0 +1,41 @@
+{
+  "name": "proyecto-playeras-ia-client",
+  "version": "1.0.0",
+  "description": "Frontend para el proyecto de playeras con IA",
+  "main": "pages/index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "export": "next export"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "@react-three/fiber": "^8.15.0",
+    "@react-three/drei": "^9.88.0",
+    "three": "^0.158.0",
+    "axios": "^1.6.0",
+    "styled-components": "^6.1.0",
+    "framer-motion": "^10.16.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@types/three": "^0.158.0"
+  },
+  "keywords": [
+    "react",
+    "nextjs",
+    "three.js",
+    "ai",
+    "design",
+    "t-shirts"
+  ],
+  "author": "Tu Nombre",
+  "license": "MIT"
+}

@@ -1,0 +1,72 @@
+# Dependencias
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Variables de entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de Next.js
+.next/
+out/
+build/
+
+# Archivos de desarrollo
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs
+*.log
+
+# Archivos temporales
+.tmp/
+tmp/
+
+# Archivos del sistema operativo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archivos de testing
+coverage/
+.nyc_output/
+
+# Archivos de cache
+.cache/
+.parcel-cache/
+
+# Archivos de base de datos locales
+*.db
+*.sqlite
+
+# Archivos de uploads temporales
+uploads/temp/
+
+# Archivos de certificados y claves
+*.pem
+*.key
+*.crt
+
+# Archivos de Blender (solo temporales)
+*.blend1
+*.blend2
+
+# Archivos de modelos 3D grandes (opcional, dependiendo del flujo de trabajo)
+# *.glb
+# *.gltf
+
+# Archivos de distribución
+dist/
