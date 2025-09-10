@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Head from 'next/head';
 
-const Design = () => {
+export default function Design() {
   // Estados para el diseño y generación
   const [currentDesign, setCurrentDesign] = useState(null);
   const [generatedImages, setGeneratedImages] = useState([]);
@@ -47,18 +47,15 @@ const Design = () => {
   // Estados para vista y animaciones
   const [viewMode, setViewMode] = useState('front');
   const [isRotating, setIsRotating] = useState(false);
+  const [showWireframe, setShowWireframe] = useState(false);
+  const [lighting, setLighting] = useState('studio');
   const [background3D, setBackground3D] = useState('studio');
-  const [showOnlyShirt, setShowOnlyShirt] = useState(false); // Toggle para mostrar solo playera o avatar+playera
-  const [activePanel, setActivePanel] = useState('generator'); // Para navegación fluida
-  
-  // Estados para el carrito y diseños
-  const [cart, setCart] = useState([]);
-  const [selectedDesign, setSelectedDesign] = useState(null);
 
   // Referencias para el canvas 3D
   const canvas3DRef = useRef(null);
+  const animationRef = useRef(null);
 
-  // Conversión de costos a pesos mexicanos (1 USD = 18 MXN aproximadamente)
+  // Conversión de costos a pesos mexicanos
   const AI_COSTS_MXN = {
     gemini: 32.40,
     midjourney: 45.00,
@@ -111,6 +108,7 @@ const Design = () => {
     setIsGenerating(true);
     
     try {
+      // Simulación de llamada a API con costos en MXN
       setTimeout(() => {
         const cost = AI_COSTS_MXN[aiProvider];
         const newDesign = {
@@ -126,7 +124,10 @@ const Design = () => {
         
         setGeneratedImages(prev => [newDesign, ...prev]);
         setCurrentDesign(newDesign);
+        
+        // Aplicar el diseño a la camiseta 3D
         updateShirt3D('design', newDesign);
+        
         setIsGenerating(false);
       }, 3000);
     } catch (error) {
@@ -141,6 +142,8 @@ const Design = () => {
       ...prev,
       [key]: value
     }));
+    
+    // Actualizar el avatar en tiempo real
     renderAvatar3D();
   };
 
@@ -150,6 +153,8 @@ const Design = () => {
       ...prev,
       [key]: value
     }));
+    
+    // Actualizar la camiseta en tiempo real
     renderShirt3D();
   };
 
@@ -197,7 +202,11 @@ const Design = () => {
   const renderAvatar3D = () => {
     if (canvas3DRef.current) {
       const ctx = canvas3DRef.current.getContext('2d');
+      
+      // Limpiar canvas
       ctx.clearRect(0, 0, 400, 500);
+      
+      // Dibujar avatar simplificado (placeholder para 3D real)
       drawSimpleAvatar(ctx);
     }
   };
@@ -207,6 +216,7 @@ const Design = () => {
     const centerX = 200;
     const centerY = 250;
     
+    // Color de piel basado en selección
     const skinColors = {
       light: '#FDBCB4',
       'medium-light': '#E09B85',
@@ -274,6 +284,20 @@ const Design = () => {
     renderAvatar3D();
   };
 
+  // Calcular costo total
+  const calculateTotalCost = () => {
+    const aiCost = AI_COSTS_MXN[aiProvider];
+    const shirtCost = SHIRT_COSTS_MXN.base;
+    const shippingCost = SHIRT_COSTS_MXN.shipping;
+    
+    return {
+      ai: aiCost,
+      shirt: shirtCost,
+      shipping: shippingCost,
+      total: aiCost + shirtCost + shippingCost
+    };
+  };
+
   // Efectos para inicialización
   useEffect(() => {
     renderAvatar3D();
@@ -295,43 +319,6 @@ const Design = () => {
     }
   }, [isRotating, camera3D.rotation]);
 
-  // Helper functions
-  const addToCart = () => {
-    if (!selectedDesign) return;
-    
-    const newItem = {
-      id: Date.now(),
-      name: `Playera personalizada - ${selectedDesign.prompt.slice(0, 30)}...`,
-      price: 120 + AI_COSTS_MXN[aiProvider],
-      size: shirt3D.size,
-      material: shirt3D.material,
-      design: selectedDesign
-    };
-    
-    setCart([...cart, newItem]);
-    alert('¡Diseño agregado al carrito! 🛒');
-  };
-
-  const removeFromCart = (index) => {
-    const newCart = cart.filter((_, i) => i !== index);
-    setCart(newCart);
-  };
-
-  const selectDesign = (design) => {
-    setSelectedDesign(design);
-    setCurrentDesign(design);
-    updateShirt3D('design', design);
-  };
-
-  const calculateTotalCost = () => {
-    const ai = selectedDesign ? AI_COSTS_MXN[aiProvider] : 0;
-    const shirt = 120;
-    const shipping = 50;
-    const total = ai + shirt + shipping;
-    
-    return { ai, shirt, shipping, total };
-  };
-
   return (
     <>
       <Head>
@@ -339,279 +326,170 @@ const Design = () => {
         <meta name="description" content="Crea diseños únicos para playeras usando inteligencia artificial" />
       </Head>
 
-      {/* Custom Styles */}
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap');
-        
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        
-        body {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          background: #0a0a0f;
-          color: #ffffff;
-          overflow-x: hidden;
-        }
-        
-        .glass-panel {
-          background: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(139, 92, 246, 0.2);
-          border-radius: 24px;
-          box-shadow: 
-            0 8px 32px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        }
-        
-        .glass-button {
-          background: rgba(139, 92, 246, 0.15);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(139, 92, 246, 0.3);
-          border-radius: 16px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .glass-button:hover {
-          background: rgba(139, 92, 246, 0.25);
-          border-color: rgba(139, 92, 246, 0.5);
-          transform: translateY(-2px);
-          box-shadow: 0 12px 24px rgba(139, 92, 246, 0.2);
-        }
-        
-        .holographic-gradient {
-          background: linear-gradient(
-            135deg,
-            #667eea 0%,
-            #764ba2 25%,
-            #a855f7 50%,
-            #ec4899 75%,
-            #f59e0b 100%
-          );
-          background-size: 300% 300%;
-          animation: holographicShift 8s ease-in-out infinite;
-        }
-        
-        @keyframes holographicShift {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-        
-        .neon-glow {
-          box-shadow: 
-            0 0 20px rgba(139, 92, 246, 0.3),
-            0 0 40px rgba(139, 92, 246, 0.2),
-            0 0 80px rgba(139, 92, 246, 0.1);
-        }
-        
-        .toggle-switch {
-          position: relative;
-          width: 60px;
-          height: 30px;
-          background: rgba(55, 65, 81, 0.8);
-          border-radius: 25px;
-          border: 1px solid rgba(139, 92, 246, 0.3);
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        
-        .toggle-switch.active {
-          background: linear-gradient(135deg, #8b5cf6, #a855f7);
-          box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
-        }
-        
-        .toggle-slider {
-          position: absolute;
-          top: 2px;
-          left: 2px;
-          width: 24px;
-          height: 24px;
-          background: white;
-          border-radius: 50%;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-        
-        .toggle-switch.active .toggle-slider {
-          transform: translateX(30px);
-          background: #f8fafc;
-        }
-        
-        .floating-card {
-          transform: translateY(0);
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .floating-card:hover {
-          transform: translateY(-8px);
-        }
-        
-        .ai-pulse {
-          animation: aiPulse 2s ease-in-out infinite;
-        }
-        
-        @keyframes aiPulse {
-          0%, 100% { 
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
-          }
-          50% { 
-            box-shadow: 0 0 40px rgba(139, 92, 246, 0.8);
-          }
-        }
-        
-        .tech-grid {
-          background-image: 
-            linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
-          background-size: 50px 50px;
-        }
-        
-        .cyber-input {
-          background: rgba(17, 24, 39, 0.8);
-          border: 1px solid rgba(139, 92, 246, 0.3);
-          border-radius: 12px;
-          color: #ffffff;
-          transition: all 0.3s ease;
-        }
-        
-        .cyber-input:focus {
-          border-color: #8b5cf6;
-          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-          outline: none;
-        }
-        
-        .dashboard-nav {
-          background: rgba(17, 24, 39, 0.95);
-          backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(139, 92, 246, 0.2);
-        }
-      `}</style>
-
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 tech-grid">
-        {/* Navigation Dashboard */}
-        <nav className="dashboard-nav sticky top-0 z-50 p-4">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="holographic-gradient p-3 rounded-2xl">
-                <span className="text-2xl font-bold text-white">🎨</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">AI Design Studio</h1>
-                <p className="text-purple-300 text-sm">Powered by Advanced Intelligence</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              {['generator', 'avatar', 'config'].map((panel) => (
-                <button
-                  key={panel}
-                  onClick={() => setActivePanel(panel)}
-                  className={`px-4 py-2 rounded-xl transition-all duration-300 ${
-                    activePanel === panel
-                      ? 'glass-button text-white'
-                      : 'text-purple-300 hover:text-white'
-                  }`}
-                >
-                  {panel === 'generator' ? '🤖 Generador' : 
-                   panel === 'avatar' ? '👤 Avatar 3D' : 
-                   '⚙️ Configuración'}
-                </button>
-              ))}
-            </div>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              🎨 Estudio de Diseño con IA
+            </h1>
+            <p className="text-xl text-gray-600">
+              Crea diseños únicos con inteligencia artificial y visualízalos en tiempo real
+            </p>
           </div>
-        </nav>
 
-        {/* Main Dashboard */}
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="grid grid-cols-12 gap-6 h-[calc(100vh-120px)]">
-            
-            {/* Central Avatar Display - Takes center stage */}
-            <div className="col-span-12 lg:col-span-7 relative">
-              <div className="glass-panel p-6 h-full floating-card">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white flex items-center">
-                    <span className="holographic-gradient p-2 rounded-lg mr-3 text-white">👤</span>
-                    Visualizador 3D Central
-                  </h2>
-                  
-                  {/* Toggle para mostrar solo playera o avatar+playera */}
-                  <div className="flex items-center space-x-3">
-                    <span className="text-purple-300 text-sm">Solo Playera</span>
-                    <div 
-                      className={`toggle-switch ${!showOnlyShirt ? 'active' : ''}`}
-                      onClick={() => setShowOnlyShirt(!showOnlyShirt)}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white rounded-2xl shadow-xl p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                  <span className="bg-purple-100 p-2 rounded-lg mr-3">🤖</span>
+                  Generador con IA
+                </h2>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Describe tu diseño
+                  </label>
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Ej: Un dragón místico con colores vibrantes, estilo artístico japonés..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    rows="3"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Proveedor de IA
+                    </label>
+                    <select
+                      value={aiProvider}
+                      onChange={(e) => setAiProvider(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                     >
-                      <div className="toggle-slider"></div>
-                    </div>
-                    <span className="text-purple-300 text-sm">Avatar + Playera</span>
+                      <option value="gemini">Gemini - $32.40 MXN</option>
+                      <option value="midjourney">Midjourney - $45.00 MXN</option>
+                      <option value="openai">OpenAI - $54.00 MXN</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Estilo
+                    </label>
+                    <select
+                      value={selectedStyle}
+                      onChange={(e) => setSelectedStyle(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="realistic">Realista</option>
+                      <option value="artistic">Artístico</option>
+                      <option value="cartoon">Caricatura</option>
+                      <option value="minimalist">Minimalista</option>
+                      <option value="vintage">Vintage</option>
+                      <option value="abstract">Abstracto</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Paleta de Colores
+                    </label>
+                    <select
+                      value={selectedPalette}
+                      onChange={(e) => setSelectedPalette(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="vibrant">Vibrante</option>
+                      <option value="pastel">Pastel</option>
+                      <option value="monochrome">Monocromático</option>
+                      <option value="warm">Cálidos</option>
+                      <option value="cool">Fríos</option>
+                      <option value="earth">Tierra</option>
+                      <option value="neon">Neón</option>
+                    </select>
                   </div>
                 </div>
 
-                <div className="relative h-full max-h-[600px]">
-                  <div className="absolute inset-0 rounded-2xl overflow-hidden neon-glow">
-                    <div className="holographic-gradient absolute inset-0 opacity-20"></div>
-                    <div className="relative bg-gray-900/80 backdrop-filter backdrop-blur-xl h-full flex items-center justify-center rounded-2xl">
+                <button
+                  onClick={generateDesign}
+                  disabled={isGenerating || !prompt.trim()}
+                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center"
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                      Generando diseño...
+                    </>
+                  ) : (
+                    <>
+                      <span className="mr-2">✨</span>
+                      Generar Diseño - ${AI_COSTS_MXN[aiProvider]} MXN
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-xl p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                  <span className="bg-blue-100 p-2 rounded-lg mr-3">👤</span>
+                  Visor 3D del Avatar
+                </h2>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="relative">
+                    <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl p-4 min-h-[500px] flex items-center justify-center">
                       <canvas
                         ref={canvas3DRef}
-                        width="500"
-                        height="600"
-                        className="rounded-xl shadow-2xl"
-                        style={{ 
-                          background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)',
-                          filter: 'drop-shadow(0 0 20px rgba(139, 92, 246, 0.3))'
-                        }}
+                        width="400"
+                        height="500"
+                        className="rounded-lg shadow-inner"
+                        style={{ background: background3D === 'studio' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa' }}
                       />
                     </div>
-                  </div>
 
-                  {/* Floating Controls */}
-                  <div className="absolute top-4 left-4 flex space-x-2">
-                    {['front', 'back', 'side-left', 'side-right'].map((view) => (
-                      <button
-                        key={view}
-                        onClick={() => changeView(view)}
-                        className={`glass-button px-3 py-2 text-sm font-medium transition-all ${
-                          viewMode === view
-                            ? 'text-white neon-glow'
-                            : 'text-purple-300 hover:text-white'
-                        }`}
-                      >
-                        {view === 'front' ? '👤' : view === 'back' ? '🔄' : 
-                         view === 'side-left' ? '↩️' : '↪️'}
-                      </button>
-                    ))}
-                  </div>
+                    <div className="absolute top-4 left-4 flex space-x-2">
+                      {['front', 'back', 'side-left', 'side-right'].map((view) => (
+                        <button
+                          key={view}
+                          onClick={() => changeView(view)}
+                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                            viewMode === view
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-white/80 text-gray-700 hover:bg-white'
+                          }`}
+                        >
+                          {view === 'front' ? '👤' : view === 'back' ? '🔄' : 
+                           view === 'side-left' ? '↩️' : '↪️'}
+                        </button>
+                      ))}
+                    </div>
 
-                  {/* Bottom Floating Controls */}
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <div className="glass-panel p-4">
+                    <div className="absolute bottom-4 left-4 right-4 bg-white/90 rounded-lg p-3">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <button
-                            onClick={toggleAutoRotate}
-                            className={`glass-button px-4 py-2 font-medium transition-all ${
-                              isRotating ? 'neon-glow text-red-300' : 'text-purple-300'
-                            }`}
-                          >
-                            {isRotating ? '⏸️ Parar' : '🔄 Rotar'}
-                          </button>
-                        </div>
+                        <button
+                          onClick={toggleAutoRotate}
+                          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                            isRotating
+                              ? 'bg-red-500 text-white'
+                              : 'bg-blue-500 text-white hover:bg-blue-600'
+                          }`}
+                        >
+                          {isRotating ? '⏸️ Parar' : '🔄 Rotar'}
+                        </button>
 
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2">
                           <button
                             onClick={() => updateCamera3D({ zoom: Math.max(0.5, camera3D.zoom - 0.1) })}
-                            className="glass-button p-2 text-purple-300 hover:text-white"
+                            className="p-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
                           >
                             🔍➖
                           </button>
-                          <span className="text-purple-300 font-mono text-sm bg-gray-800/50 px-3 py-1 rounded-lg">
-                            {Math.round(camera3D.zoom * 100)}%
-                          </span>
+                          <span className="text-sm font-medium">{Math.round(camera3D.zoom * 100)}%</span>
                           <button
                             onClick={() => updateCamera3D({ zoom: Math.min(2.0, camera3D.zoom + 0.1) })}
-                            className="glass-button p-2 text-purple-300 hover:text-white"
+                            className="p-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
                           >
                             🔍➕
                           </button>
@@ -619,144 +497,31 @@ const Design = () => {
 
                         <button
                           onClick={resetCamera}
-                          className="glass-button px-4 py-2 text-purple-300 hover:text-white font-medium"
+                          className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
                         >
                           🏠 Reset
                         </button>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Sidebar - Dynamic Panels */}
-            <div className="col-span-12 lg:col-span-5 space-y-6">
-              
-              {/* AI Generator Panel */}
-              {activePanel === 'generator' && (
-                <div className="glass-panel p-6 floating-card ai-pulse">
-                  <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-                    <span className="holographic-gradient p-2 rounded-lg mr-3 text-white">🤖</span>
-                    Generador AI
-                  </h3>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-purple-300 text-sm mb-2 font-medium">
-                        Describe tu visión
-                      </label>
-                      <textarea
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="Un dragón holográfico con efectos cyber-punk..."
-                        className="w-full px-4 py-3 cyber-input resize-none font-mono text-sm"
-                        rows="3"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="block text-purple-300 text-sm mb-2 font-medium">
-                          Proveedor AI
-                        </label>
-                        <select
-                          value={aiProvider}
-                          onChange={(e) => setAiProvider(e.target.value)}
-                          className="w-full px-4 py-3 cyber-input font-mono text-sm"
-                        >
-                          <option value="gemini">🔮 Gemini - $32.40 MXN</option>
-                          <option value="midjourney">🎨 Midjourney - $45.00 MXN</option>
-                          <option value="openai">🧠 OpenAI - $54.00 MXN</option>
-                        </select>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-purple-300 text-sm mb-2 font-medium">
-                            Estilo
-                          </label>
-                          <select
-                            value={selectedStyle}
-                            onChange={(e) => setSelectedStyle(e.target.value)}
-                            className="w-full px-3 py-2 cyber-input text-sm"
-                          >
-                            <option value="realistic">Realista</option>
-                            <option value="artistic">Artístico</option>
-                            <option value="cartoon">Caricatura</option>
-                            <option value="minimalist">Minimalista</option>
-                            <option value="vintage">Vintage</option>
-                            <option value="abstract">Abstracto</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-purple-300 text-sm mb-2 font-medium">
-                            Paleta
-                          </label>
-                          <select
-                            value={selectedPalette}
-                            onChange={(e) => setSelectedPalette(e.target.value)}
-                            className="w-full px-3 py-2 cyber-input text-sm"
-                          >
-                            <option value="vibrant">Vibrante</option>
-                            <option value="pastel">Pastel</option>
-                            <option value="monochrome">Monocromático</option>
-                            <option value="warm">Cálidos</option>
-                            <option value="cool">Fríos</option>
-                            <option value="earth">Tierra</option>
-                            <option value="neon">Neón</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={generateDesign}
-                      disabled={isGenerating || !prompt.trim()}
-                      className="w-full holographic-gradient hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center shadow-2xl"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                          <span className="font-mono">Generando...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="mr-2">✨</span>
-                          <span className="font-mono">Generar → ${AI_COSTS_MXN[aiProvider]} MXN</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Avatar Configuration Panel */}
-              {activePanel === 'avatar' && (
-                <div className="glass-panel p-6 floating-card avatar-glow">
-                  <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-                    <span className="holographic-gradient p-2 rounded-lg mr-3 text-white">👤</span>
-                    Configuración Avatar 3D
-                  </h3>
-
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-purple-300 text-sm mb-3 font-medium">
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
                         Tipo de Cuerpo
                       </label>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2">
                         {AVATAR_CONFIG.bodyTypes.map((type) => (
                           <button
                             key={type.id}
                             onClick={() => updateAvatar3D('bodyType', type.id)}
-                            className={`glass-button p-4 text-center transition-all ${
+                            className={`p-3 rounded-lg border text-center transition-all ${
                               avatar3D.bodyType === type.id
-                                ? 'neon-glow text-white'
-                                : 'text-purple-300 hover:text-white'
+                                ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                : 'border-gray-200 hover:border-gray-300'
                             }`}
                           >
-                            <div className="text-2xl mb-2">{type.icon}</div>
+                            <div className="text-2xl mb-1">{type.icon}</div>
                             <div className="text-sm font-medium">{type.name}</div>
                           </button>
                         ))}
@@ -764,18 +529,18 @@ const Design = () => {
                     </div>
 
                     <div>
-                      <label className="block text-purple-300 text-sm mb-3 font-medium">
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
                         Tono de Piel
                       </label>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex space-x-2">
                         {AVATAR_CONFIG.skinTones.map((tone) => (
                           <button
                             key={tone.id}
                             onClick={() => updateAvatar3D('skinTone', tone.id)}
                             className={`w-12 h-12 rounded-full border-4 transition-all ${
                               avatar3D.skinTone === tone.id
-                                ? 'border-purple-400 neon-glow scale-110'
-                                : 'border-gray-600 hover:border-purple-300'
+                                ? 'border-purple-500 scale-110'
+                                : 'border-gray-200 hover:border-gray-300'
                             }`}
                             style={{ backgroundColor: tone.color }}
                             title={tone.name}
@@ -785,7 +550,7 @@ const Design = () => {
                     </div>
 
                     <div>
-                      <label className="block text-purple-300 text-sm mb-3 font-medium">
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
                         Estilo de Cabello
                       </label>
                       <div className="grid grid-cols-3 gap-2">
@@ -793,10 +558,10 @@ const Design = () => {
                           <button
                             key={hair.id}
                             onClick={() => updateAvatar3D('hairStyle', hair.id)}
-                            className={`glass-button p-3 text-center transition-all ${
+                            className={`p-2 rounded-lg border text-center transition-all ${
                               avatar3D.hairStyle === hair.id
-                                ? 'neon-glow text-white'
-                                : 'text-purple-300 hover:text-white'
+                                ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                : 'border-gray-200 hover:border-gray-300'
                             }`}
                           >
                             <div className="text-xl mb-1">{hair.icon}</div>
@@ -807,19 +572,19 @@ const Design = () => {
                     </div>
 
                     <div>
-                      <label className="block text-purple-300 text-sm mb-3 font-medium">
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
                         Color de Cabello
                       </label>
                       <input
                         type="color"
                         value={avatar3D.hairColor}
                         onChange={(e) => updateAvatar3D('hairColor', e.target.value)}
-                        className="w-full h-12 rounded-xl bg-gray-800/50 border border-purple-500/30 cursor-pointer"
+                        className="w-full h-12 rounded-lg border border-gray-300 cursor-pointer"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-purple-300 text-sm mb-3 font-medium">
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
                         Vello Facial
                       </label>
                       <div className="grid grid-cols-2 gap-2">
@@ -827,10 +592,10 @@ const Design = () => {
                           <button
                             key={facial.id}
                             onClick={() => updateAvatar3D('facialHair', facial.id)}
-                            className={`glass-button p-3 text-center transition-all ${
+                            className={`p-2 rounded-lg border text-center transition-all ${
                               avatar3D.facialHair === facial.id
-                                ? 'neon-glow text-white'
-                                : 'text-purple-300 hover:text-white'
+                                ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                : 'border-gray-200 hover:border-gray-300'
                             }`}
                           >
                             <div className="text-xl mb-1">{facial.icon}</div>
@@ -841,237 +606,78 @@ const Design = () => {
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
+            </div>
 
-              {/* Configuration Panel */}
-              {activePanel === 'config' && (
-                <div className="glass-panel p-6 floating-card">
-                  <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-                    <span className="holographic-gradient p-2 rounded-lg mr-3 text-white">⚙️</span>
-                    Configuración de Playera
-                  </h3>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-purple-300 text-sm mb-2 font-medium">
-                        Tipo de Playera
-                      </label>
-                      <select
-                        value={shirt3D.type}
-                        onChange={(e) => updateShirt3D('type', e.target.value)}
-                        className="w-full px-4 py-3 cyber-input"
-                      >
-                        <option value="crew-neck">Cuello Redondo</option>
-                        <option value="v-neck">Cuello V</option>
-                        <option value="polo">Polo</option>
-                        <option value="tank-top">Tirantes</option>
-                        <option value="long-sleeve">Manga Larga</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-purple-300 text-sm mb-2 font-medium">
-                        Color Base
-                      </label>
-                      <input
-                        type="color"
-                        value={shirt3D.color}
-                        onChange={(e) => updateShirt3D('color', e.target.value)}
-                        className="w-full h-12 rounded-xl bg-gray-800/50 border border-purple-500/30 cursor-pointer"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-purple-300 text-sm mb-2 font-medium">
-                          Talla
-                        </label>
-                        <select
-                          value={shirt3D.size}
-                          onChange={(e) => updateShirt3D('size', e.target.value)}
-                          className="w-full px-3 py-2 cyber-input text-sm"
-                        >
-                          <option value="XS">XS</option>
-                          <option value="S">S</option>
-                          <option value="M">M</option>
-                          <option value="L">L</option>
-                          <option value="XL">XL</option>
-                          <option value="XXL">XXL</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-purple-300 text-sm mb-2 font-medium">
-                          Material
-                        </label>
-                        <select
-                          value={shirt3D.material}
-                          onChange={(e) => updateShirt3D('material', e.target.value)}
-                          className="w-full px-3 py-2 cyber-input text-sm"
-                        >
-                          <option value="cotton">Algodón</option>
-                          <option value="polyester">Poliéster</option>
-                          <option value="blend">Mezcla</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="glass-panel p-4 mt-6">
-                      <h4 className="text-lg font-bold text-white mb-4 flex items-center">
-                        <span className="text-green-400 mr-2">💰</span>
-                        Resumen de Costos
-                      </h4>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-purple-300">Playera Base:</span>
-                          <span className="text-white font-mono">$120.00 MXN</span>
-                        </div>
-                        {selectedDesign && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-purple-300">Diseño AI:</span>
-                            <span className="text-white font-mono">${AI_COSTS_MXN[aiProvider]} MXN</span>
-                          </div>
-                        )}
-                        <div className="border-t border-purple-500/30 pt-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-white font-bold">Total:</span>
-                            <span className="text-green-400 font-bold font-mono">
-                              ${selectedDesign ? (120 + AI_COSTS_MXN[aiProvider]).toFixed(2) : '120.00'} MXN
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={addToCart}
-                        disabled={!selectedDesign}
-                        className="w-full mt-4 holographic-gradient hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl transition-all duration-300"
-                      >
-                        🛒 Agregar al Carrito
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Shopping Cart - Fixed Bottom Panel */}
-              <div className="glass-panel p-6 floating-card">
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-                  <span className="holographic-gradient p-2 rounded-lg mr-3 text-white">🛒</span>
-                  Carrito de Compras
-                  {cart.length > 0 && (
-                    <span className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                      {cart.length}
-                    </span>
-                  )}
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl shadow-xl p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                  <span className="bg-green-100 p-2 rounded-lg mr-3">💰</span>
+                  Resumen de Costos
                 </h3>
-
-                {cart.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-purple-400 text-6xl mb-4">🛒</div>
-                    <p className="text-purple-300">Tu carrito está vacío</p>
-                    <p className="text-sm text-purple-400 mt-2">Agrega diseños para empezar</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="max-h-60 overflow-y-auto space-y-3">
-                      {cart.map((item, index) => (
-                        <div key={index} className="flex items-center space-x-3 p-3 glass-button">
-                          <div className="w-12 h-12 holographic-gradient rounded-lg flex items-center justify-center">
-                            <span className="text-lg text-white">👕</span>
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-white">{item.name}</p>
-                            <p className="text-sm text-purple-300">{item.size} • {item.material}</p>
-                            <p className="text-sm font-medium text-green-400">${item.price} MXN</p>
-                          </div>
-                          <button
-                            onClick={() => removeFromCart(index)}
-                            className="text-red-400 hover:text-red-300 p-2 hover:bg-red-500/20 rounded-lg transition-all"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <div className="border-t border-purple-500/30 pt-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="text-lg font-bold text-white">Total:</span>
-                        <span className="text-xl font-bold text-green-400 font-mono">
-                          ${cart.reduce((total, item) => total + item.price, 0).toFixed(2)} MXN
-                        </span>
+                
+                {(() => {
+                  const costs = calculateTotalCost();
+                  return (
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Generación IA ({aiProvider}):</span>
+                        <span className="font-semibold">${costs.ai} MXN</span>
                       </div>
-                      
-                      <button
-                        onClick={() => {
-                          alert('¡Compra realizada con éxito! 🎉\nGracias por tu pedido.');
-                          setCart([]);
-                        }}
-                        className="w-full holographic-gradient hover:scale-105 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300"
-                      >
-                        💳 Proceder al Pago
-                      </button>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Camiseta base:</span>
+                        <span className="font-semibold">${costs.shirt} MXN</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Envío:</span>
+                        <span className="font-semibold">${costs.shipping} MXN</span>
+                      </div>
+                      <hr className="my-3" />
+                      <div className="flex justify-between items-center text-lg">
+                        <span className="font-bold text-gray-900">Total:</span>
+                        <span className="font-bold text-purple-600">${costs.total} MXN</span>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
 
-              {/* Generated Designs Display */}
-              {generatedImages.length > 0 && (
-                <div className="glass-panel p-6 floating-card">
-                  <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-                    <span className="holographic-gradient p-2 rounded-lg mr-3 text-white">🎨</span>
-                    Diseños Generados
-                  </h3>
+              <div className="bg-white rounded-2xl shadow-xl p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                  <span className="bg-blue-100 p-2 rounded-lg mr-3">⚡</span>
+                  Acciones
+                </h3>
+                
+                <div className="space-y-3">
+                  <button
+                    disabled={!currentDesign}
+                    className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center"
+                  >
+                    <span className="mr-2">💾</span>
+                    Guardar Diseño
+                  </button>
                   
-                  <div className="grid grid-cols-2 gap-4 max-h-80 overflow-y-auto">
-                    {generatedImages.map((image) => (
-                      <div
-                        key={image.id}
-                        className={`relative group cursor-pointer rounded-xl overflow-hidden transition-all ${
-                          currentDesign?.id === image.id
-                            ? 'neon-glow scale-105'
-                            : 'hover:scale-105'
-                        }`}
-                        onClick={() => {
-                          setCurrentDesign(image);
-                          updateShirt3D('design', image);
-                        }}
-                      >
-                        <img
-                          src={image.url}
-                          alt={`Diseño: ${image.prompt}`}
-                          className="w-full h-32 object-cover rounded-xl"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-xl" />
-                        <div className="absolute bottom-2 left-2 right-2">
-                          <div className="glass-panel p-2">
-                            <p className="text-xs font-medium text-white truncate">
-                              {image.prompt}
-                            </p>
-                            <p className="text-xs text-purple-300">
-                              ${image.cost} MXN • {image.provider}
-                            </p>
-                          </div>
-                        </div>
-                        {currentDesign?.id === image.id && (
-                          <div className="absolute top-2 right-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
-                            ✓
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <button
+                    disabled={!currentDesign}
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center"
+                  >
+                    <span className="mr-2">📤</span>
+                    Compartir
+                  </button>
+                  
+                  <button
+                    disabled={!currentDesign}
+                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center"
+                  >
+                    <span className="mr-2">🛒</span>
+                    Agregar al Carrito
+                  </button>
                 </div>
-              )}
-
+              </div>
             </div>
           </div>
         </div>
       </div>
     </>
   );
-};
-
-export default Design;
+}

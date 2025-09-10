@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Head from 'next/head';
 
-const Design = () => {
+export default function Design() {
   // Estados para el diseño y generación
   const [currentDesign, setCurrentDesign] = useState(null);
   const [generatedImages, setGeneratedImages] = useState([]);
@@ -47,12 +47,15 @@ const Design = () => {
   // Estados para vista y animaciones
   const [viewMode, setViewMode] = useState('front');
   const [isRotating, setIsRotating] = useState(false);
+  const [showWireframe, setShowWireframe] = useState(false);
+  const [lighting, setLighting] = useState('studio');
   const [background3D, setBackground3D] = useState('studio');
 
   // Referencias para el canvas 3D
   const canvas3DRef = useRef(null);
+  const animationRef = useRef(null);
 
-  // Conversión de costos a pesos mexicanos (1 USD = 18 MXN aproximadamente)
+  // Conversión de costos a pesos mexicanos
   const AI_COSTS_MXN = {
     gemini: 32.40,
     midjourney: 45.00,
@@ -67,49 +70,95 @@ const Design = () => {
   // Configuraciones del avatar realista
   const AVATAR_CONFIG = {
     bodyTypes: [
-      { id: 'slim', name: 'Delgado', icon: '🏃' },
+      { id: 'slim', name: 'Delgado', icon: '🧍‍♂️' },
+      { id: 'regular', name: 'Regular', icon: '🧍' },
       { id: 'athletic', name: 'Atlético', icon: '💪' },
-      { id: 'average', name: 'Promedio', icon: '🚶' },
-      { id: 'heavy', name: 'Robusto', icon: '🤵' }
+      { id: 'plus', name: 'Grande', icon: '🫃' }
     ],
+    
     skinTones: [
       { id: 'light', name: 'Claro', color: '#FDBCB4' },
-      { id: 'medium', name: 'Medio', color: '#E0AC69' },
-      { id: 'olive', name: 'Oliva', color: '#C68642' },
-      { id: 'dark', name: 'Oscuro', color: '#8D5524' },
-      { id: 'deep', name: 'Profundo', color: '#5D4037' }
+      { id: 'medium-light', name: 'Medio Claro', color: '#E09B85' },
+      { id: 'medium', name: 'Medio', color: '#D08B5B' },
+      { id: 'medium-dark', name: 'Medio Oscuro', color: '#C17A4A' },
+      { id: 'dark', name: 'Oscuro', color: '#8B4513' }
     ],
+    
     hairStyles: [
-      { id: 'short', name: 'Corto', icon: '✂️' },
-      { id: 'medium', name: 'Medio', icon: '💇' },
-      { id: 'long', name: 'Largo', icon: '💇‍♀️' },
-      { id: 'curly', name: 'Rizado', icon: '🌀' },
-      { id: 'bald', name: 'Calvo', icon: '🥚' },
-      { id: 'buzz', name: 'Rapado', icon: '⚡' }
+      { id: 'bald', name: 'Calvo', icon: '👨‍🦲' },
+      { id: 'short', name: 'Corto', icon: '👨' },
+      { id: 'medium', name: 'Medio', icon: '🧑' },
+      { id: 'long', name: 'Largo', icon: '👨‍🦱' },
+      { id: 'curly', name: 'Rizado', icon: '👨‍🦲' },
+      { id: 'afro', name: 'Afro', icon: '👨‍🦱' }
     ],
+
     facialHair: [
-      { id: 'none', name: 'Sin vello', icon: '😊' },
+      { id: 'none', name: 'Sin barba', icon: '👨' },
       { id: 'mustache', name: 'Bigote', icon: '🥸' },
-      { id: 'beard', name: 'Barba', icon: '🧔' },
-      { id: 'goatee', name: 'Perilla', icon: '🐐' }
+      { id: 'goatee', name: 'Perilla', icon: '🧔' },
+      { id: 'full-beard', name: 'Barba completa', icon: '🧔‍♂️' }
     ]
   };
 
-  // Funciones para manejo del avatar 3D
-  const updateAvatar3D = (property, value) => {
+  // Función para generar diseño con IA
+  const generateDesign = async () => {
+    if (!prompt.trim()) return;
+
+    setIsGenerating(true);
+    
+    try {
+      // Simulación de llamada a API con costos en MXN
+      setTimeout(() => {
+        const cost = AI_COSTS_MXN[aiProvider];
+        const newDesign = {
+          id: Date.now(),
+          url: `https://placehold.co/512x512/${selectedPalette === 'vibrant' ? '4F46E5' : '7C3AED'}/FFFFFF?text=${encodeURIComponent(prompt.substring(0, 30))}`,
+          prompt,
+          style: selectedStyle,
+          palette: selectedPalette,
+          provider: aiProvider,
+          cost: cost,
+          timestamp: new Date().toISOString()
+        };
+        
+        setGeneratedImages(prev => [newDesign, ...prev]);
+        setCurrentDesign(newDesign);
+        
+        // Aplicar el diseño a la camiseta 3D
+        updateShirt3D('design', newDesign);
+        
+        setIsGenerating(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error generating design:', error);
+      setIsGenerating(false);
+    }
+  };
+
+  // Función para actualizar configuración del avatar 3D
+  const updateAvatar3D = (key, value) => {
     setAvatar3D(prev => ({
       ...prev,
-      [property]: value
+      [key]: value
     }));
+    
+    // Actualizar el avatar en tiempo real
+    renderAvatar3D();
   };
 
-  const updateShirt3D = (property, value) => {
+  // Función para actualizar configuración de la camiseta 3D
+  const updateShirt3D = (key, value) => {
     setShirt3D(prev => ({
       ...prev,
-      [property]: value
+      [key]: value
     }));
+    
+    // Actualizar la camiseta en tiempo real
+    renderShirt3D();
   };
 
+  // Función para controlar la cámara 3D
   const updateCamera3D = (updates) => {
     setCamera3D(prev => ({
       ...prev,
@@ -117,292 +166,28 @@ const Design = () => {
     }));
   };
 
-  // Función para dibujar el avatar 3D realista
-  const drawAvatar3D = (ctx, canvas) => {
-    const { width, height } = canvas;
-    const centerX = width / 2;
-    const centerY = height / 2;
-    
-    // Aplicar transformaciones de cámara
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.scale(camera3D.zoom, camera3D.zoom);
-    ctx.rotate((camera3D.rotation.y * Math.PI) / 180);
-    ctx.translate(-centerX, -centerY);
-
-    // Obtener configuración actual
-    const currentSkinTone = AVATAR_CONFIG.skinTones.find(t => t.id === avatar3D.skinTone);
-    const currentBodyType = AVATAR_CONFIG.bodyTypes.find(t => t.id === avatar3D.bodyType);
-    
-    // Colores base
-    const skinColor = currentSkinTone?.color || '#E0AC69';
-    const hairColor = avatar3D.hairColor;
-
-    // Dimensiones basadas en el tipo de cuerpo
-    const bodyWidth = currentBodyType?.id === 'slim' ? 80 : 
-                     currentBodyType?.id === 'heavy' ? 120 : 100;
-    const bodyHeight = 180;
-
-    // Dibujar cuerpo (torso)
-    ctx.fillStyle = skinColor;
-    ctx.beginPath();
-    ctx.ellipse(centerX, centerY + 50, bodyWidth/2, bodyHeight/2, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Dibujar cuello
-    ctx.fillStyle = skinColor;
-    ctx.fillRect(centerX - 15, centerY - 50, 30, 40);
-
-    // Dibujar cabeza
-    ctx.fillStyle = skinColor;
-    ctx.beginPath();
-    ctx.ellipse(centerX, centerY - 80, 50, 60, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Dibujar cabello según el estilo
-    if (avatar3D.hairStyle !== 'bald') {
-      ctx.fillStyle = hairColor;
-      ctx.beginPath();
-      
-      switch(avatar3D.hairStyle) {
-        case 'short':
-          ctx.ellipse(centerX, centerY - 110, 55, 35, 0, 0, Math.PI);
-          break;
-        case 'medium':
-          ctx.ellipse(centerX, centerY - 105, 60, 50, 0, 0, Math.PI);
-          break;
-        case 'long':
-          ctx.ellipse(centerX, centerY - 100, 65, 70, 0, 0, Math.PI);
-          break;
-        case 'curly':
-          // Cabello rizado con círculos pequeños
-          for(let i = 0; i < 8; i++) {
-            const angle = (i / 8) * Math.PI;
-            const x = centerX + Math.cos(angle) * 45;
-            const y = centerY - 110 + Math.sin(angle) * 15;
-            ctx.beginPath();
-            ctx.arc(x, y, 8, 0, Math.PI * 2);
-            ctx.fill();
-          }
-          break;
-        case 'buzz':
-          ctx.ellipse(centerX, centerY - 115, 52, 30, 0, 0, Math.PI);
-          break;
-      }
-      ctx.fill();
-    }
-
-    // Dibujar vello facial
-    if (avatar3D.facialHair !== 'none') {
-      ctx.fillStyle = hairColor;
-      ctx.beginPath();
-      
-      switch(avatar3D.facialHair) {
-        case 'mustache':
-          ctx.ellipse(centerX, centerY - 65, 20, 5, 0, 0, Math.PI * 2);
-          break;
-        case 'beard':
-          ctx.ellipse(centerX, centerY - 40, 35, 25, 0, 0, Math.PI * 2);
-          break;
-        case 'goatee':
-          ctx.ellipse(centerX, centerY - 45, 15, 15, 0, 0, Math.PI * 2);
-          break;
-      }
-      ctx.fill();
-    }
-
-    // Dibujar ojos
-    ctx.fillStyle = avatar3D.eyeColor;
-    ctx.beginPath();
-    ctx.arc(centerX - 15, centerY - 85, 5, 0, Math.PI * 2);
-    ctx.arc(centerX + 15, centerY - 85, 5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Dibujar pupilas
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.arc(centerX - 15, centerY - 85, 2, 0, Math.PI * 2);
-    ctx.arc(centerX + 15, centerY - 85, 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Dibujar nariz
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY - 75);
-    ctx.lineTo(centerX - 3, centerY - 65);
-    ctx.moveTo(centerX, centerY - 65);
-    ctx.lineTo(centerX + 3, centerY - 65);
-    ctx.stroke();
-
-    // Dibujar boca
-    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY - 55, 8, 0, Math.PI);
-    ctx.stroke();
-
-    // Dibujar brazos
-    ctx.fillStyle = skinColor;
-    // Brazo izquierdo
-    ctx.fillRect(centerX - bodyWidth/2 - 25, centerY - 20, 25, 80);
-    // Brazo derecho  
-    ctx.fillRect(centerX + bodyWidth/2, centerY - 20, 25, 80);
-
-    // Dibujar piernas
-    ctx.fillStyle = '#2C3E50'; // Color del pantalón
-    // Pierna izquierda
-    ctx.fillRect(centerX - 25, centerY + 130, 20, 100);
-    // Pierna derecha
-    ctx.fillRect(centerX + 5, centerY + 130, 20, 100);
-
-    ctx.restore();
-  };
-
-  // Función para dibujar la camiseta sobre el avatar
-  const drawShirt3D = (ctx, canvas) => {
-    const { width, height } = canvas;
-    const centerX = width / 2;
-    const centerY = height / 2;
-    
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.scale(camera3D.zoom, camera3D.zoom);
-    ctx.rotate((camera3D.rotation.y * Math.PI) / 180);
-    ctx.translate(-centerX, -centerY);
-
-    // Obtener tipo de cuerpo para ajustar la camiseta
-    const currentBodyType = AVATAR_CONFIG.bodyTypes.find(t => t.id === avatar3D.bodyType);
-    const bodyWidth = currentBodyType?.id === 'slim' ? 80 : 
-                     currentBodyType?.id === 'heavy' ? 120 : 100;
-
-    // Dibujar camiseta
-    ctx.fillStyle = shirt3D.color;
-    ctx.globalAlpha = 0.9;
-
-    // Forma de la camiseta según el tipo
-    ctx.beginPath();
-    switch(shirt3D.type) {
-      case 'crew-neck':
-        // Cuello redondo
-        ctx.ellipse(centerX, centerY + 50, bodyWidth/2 + 10, 90, 0, 0, Math.PI * 2);
-        ctx.ellipse(centerX, centerY - 40, 25, 20, 0, 0, Math.PI * 2);
-        break;
-      case 'v-neck':
-        // Cuello en V
-        ctx.ellipse(centerX, centerY + 50, bodyWidth/2 + 10, 90, 0, 0, Math.PI * 2);
-        ctx.moveTo(centerX - 15, centerY - 30);
-        ctx.lineTo(centerX, centerY - 15);
-        ctx.lineTo(centerX + 15, centerY - 30);
-        break;
-      case 'polo':
-        // Polo con cuello
-        ctx.ellipse(centerX, centerY + 50, bodyWidth/2 + 10, 90, 0, 0, Math.PI * 2);
-        ctx.rect(centerX - 20, centerY - 40, 40, 15);
-        break;
-      case 'tank-top':
-        // Tirantes
-        ctx.ellipse(centerX, centerY + 50, bodyWidth/2 + 5, 90, 0, 0, Math.PI * 2);
-        break;
-      case 'long-sleeve':
-        // Manga larga
-        ctx.ellipse(centerX, centerY + 50, bodyWidth/2 + 10, 90, 0, 0, Math.PI * 2);
-        ctx.ellipse(centerX, centerY - 40, 25, 20, 0, 0, Math.PI * 2);
-        // Mangas
-        ctx.rect(centerX - bodyWidth/2 - 30, centerY - 20, 30, 80);
-        ctx.rect(centerX + bodyWidth/2, centerY - 20, 30, 80);
-        break;
-    }
-    ctx.fill();
-
-    // Dibujar diseño si existe
-    if (shirt3D.design && currentDesign) {
-      const designSize = 60 * shirt3D.designScale;
-      const designX = centerX + shirt3D.designPosition.x - designSize/2;
-      const designY = centerY + shirt3D.designPosition.y - designSize/2;
-      
-      // Simular diseño con un rectángulo colorido
-      ctx.fillStyle = '#FF6B6B';
-      ctx.globalAlpha = 0.8;
-      ctx.fillRect(designX, designY, designSize, designSize);
-      
-      // Agregar texto del prompt del diseño
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '8px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(currentDesign.prompt?.slice(0, 20) + '...', centerX, centerY + 10);
-    }
-
-    ctx.globalAlpha = 1.0;
-    ctx.restore();
-  };
-
-  // Función principal de renderizado 3D
-  const renderAvatar3D = () => {
-    const canvas = canvas3DRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    const { width, height } = canvas;
-
-    // Limpiar canvas
-    ctx.clearRect(0, 0, width, height);
-
-    // Establecer fondo según la vista
-    if (background3D === 'studio') {
-      const gradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width/2);
-      gradient.addColorStop(0, '#f8f9fa');
-      gradient.addColorStop(1, '#e9ecef');
-      ctx.fillStyle = gradient;
-    } else {
-      ctx.fillStyle = '#ffffff';
-    }
-    ctx.fillRect(0, 0, width, height);
-
-    // Dibujar según el modo de vista
-    switch(viewMode) {
-      case 'front':
-        drawAvatar3D(ctx, canvas);
-        drawShirt3D(ctx, canvas);
-        break;
-      case 'back':
-        ctx.save();
-        ctx.scale(-1, 1);
-        ctx.translate(-width, 0);
-        drawAvatar3D(ctx, canvas);
-        drawShirt3D(ctx, canvas);
-        ctx.restore();
-        break;
-      case 'side-left':
-        ctx.save();
-        ctx.translate(width/2, height/2);
-        ctx.rotate(-Math.PI/6);
-        ctx.translate(-width/2, -height/2);
-        drawAvatar3D(ctx, canvas);
-        drawShirt3D(ctx, canvas);
-        ctx.restore();
-        break;
-      case 'side-right':
-        ctx.save();
-        ctx.translate(width/2, height/2);
-        ctx.rotate(Math.PI/6);
-        ctx.translate(-width/2, -height/2);
-        drawAvatar3D(ctx, canvas);
-        drawShirt3D(ctx, canvas);
-        ctx.restore();
-        break;
-    }
-  };
-
-  // Funciones de control de cámara
+  // Función para cambiar vista del avatar
   const changeView = (view) => {
     setViewMode(view);
+    
+    const viewPositions = {
+      front: { x: 0, y: 0, z: 0 },
+      back: { x: 0, y: 180, z: 0 },
+      'side-left': { x: 0, y: -90, z: 0 },
+      'side-right': { x: 0, y: 90, z: 0 }
+    };
+    
+    updateCamera3D({
+      rotation: viewPositions[view]
+    });
   };
 
+  // Función para rotar automáticamente
   const toggleAutoRotate = () => {
     setIsRotating(!isRotating);
   };
 
+  // Función para resetear la cámara
   const resetCamera = () => {
     setCamera3D({
       zoom: 1.0,
@@ -410,6 +195,92 @@ const Design = () => {
       position: { x: 0, y: 0, z: 5 },
       target: { x: 0, y: 0, z: 0 }
     });
+    setViewMode('front');
+  };
+
+  // Renderizado del avatar 3D (simulado)
+  const renderAvatar3D = () => {
+    if (canvas3DRef.current) {
+      const ctx = canvas3DRef.current.getContext('2d');
+      
+      // Limpiar canvas
+      ctx.clearRect(0, 0, 400, 500);
+      
+      // Dibujar avatar simplificado (placeholder para 3D real)
+      drawSimpleAvatar(ctx);
+    }
+  };
+
+  // Función para dibujar avatar simplificado
+  const drawSimpleAvatar = (ctx) => {
+    const centerX = 200;
+    const centerY = 250;
+    
+    // Color de piel basado en selección
+    const skinColors = {
+      light: '#FDBCB4',
+      'medium-light': '#E09B85',
+      medium: '#D08B5B',
+      'medium-dark': '#C17A4A',
+      dark: '#8B4513'
+    };
+    
+    const skinColor = skinColors[avatar3D.skinTone];
+    
+    // Dibujar cabeza
+    ctx.beginPath();
+    ctx.arc(centerX, centerY - 150, 60, 0, 2 * Math.PI);
+    ctx.fillStyle = skinColor;
+    ctx.fill();
+    
+    // Dibujar cabello
+    if (avatar3D.hairStyle !== 'bald') {
+      ctx.beginPath();
+      ctx.arc(centerX, centerY - 180, 65, 0, Math.PI, true);
+      ctx.fillStyle = avatar3D.hairColor;
+      ctx.fill();
+    }
+    
+    // Dibujar cuerpo
+    const bodyWidths = {
+      slim: 40,
+      regular: 50,
+      athletic: 60,
+      plus: 70
+    };
+    
+    const bodyWidth = bodyWidths[avatar3D.bodyType];
+    
+    ctx.beginPath();
+    ctx.rect(centerX - bodyWidth, centerY - 80, bodyWidth * 2, 120);
+    ctx.fillStyle = shirt3D.color;
+    ctx.fill();
+    
+    // Dibujar diseño en la camiseta
+    if (currentDesign) {
+      ctx.fillStyle = '#333';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Diseño IA', centerX, centerY - 20);
+    }
+    
+    // Dibujar brazos
+    ctx.beginPath();
+    ctx.rect(centerX - bodyWidth - 15, centerY - 60, 15, 80);
+    ctx.rect(centerX + bodyWidth, centerY - 60, 15, 80);
+    ctx.fillStyle = skinColor;
+    ctx.fill();
+    
+    // Dibujar piernas
+    ctx.beginPath();
+    ctx.rect(centerX - 25, centerY + 40, 20, 100);
+    ctx.rect(centerX + 5, centerY + 40, 20, 100);
+    ctx.fillStyle = '#2C5530';
+    ctx.fill();
+  };
+
+  // Renderizado de la camiseta 3D
+  const renderShirt3D = () => {
     renderAvatar3D();
   };
 
@@ -448,38 +319,6 @@ const Design = () => {
     }
   }, [isRotating, camera3D.rotation]);
 
-  // Función para generar diseño
-  const generateDesign = async () => {
-    if (!prompt.trim()) return;
-
-    setIsGenerating(true);
-    try {
-      // Simular llamada a API de IA
-      const newDesign = {
-        id: Date.now(),
-        prompt: prompt,
-        style: selectedStyle,
-        palette: selectedPalette,
-        provider: aiProvider,
-        url: `https://via.placeholder.com/300x300/6366f1/ffffff?text=${encodeURIComponent(prompt.slice(0, 20))}`,
-        cost: AI_COSTS_MXN[aiProvider],
-        timestamp: new Date().toISOString()
-      };
-
-      setTimeout(() => {
-        setGeneratedImages(prev => [newDesign, ...prev]);
-        setCurrentDesign(newDesign);
-        updateShirt3D('design', newDesign);
-        setIsGenerating(false);
-        setPrompt('');
-      }, 2000);
-
-    } catch (error) {
-      console.error('Error generating design:', error);
-      setIsGenerating(false);
-    }
-  };
-
   return (
     <>
       <Head>
@@ -487,7 +326,7 @@ const Design = () => {
         <meta name="description" content="Crea diseños únicos para playeras usando inteligencia artificial" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -768,120 +607,6 @@ const Design = () => {
                   </div>
                 </div>
               </div>
-
-              <div className="bg-white rounded-2xl shadow-xl p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                  <span className="bg-green-100 p-2 rounded-lg mr-3">👕</span>
-                  Configuración de la Camiseta
-                </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tipo
-                    </label>
-                    <select
-                      value={shirt3D.type}
-                      onChange={(e) => updateShirt3D('type', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="crew-neck">Cuello Redondo</option>
-                      <option value="v-neck">Cuello V</option>
-                      <option value="polo">Polo</option>
-                      <option value="tank-top">Tirantes</option>
-                      <option value="long-sleeve">Manga Larga</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Color
-                    </label>
-                    <input
-                      type="color"
-                      value={shirt3D.color}
-                      onChange={(e) => updateShirt3D('color', e.target.value)}
-                      className="w-full h-10 rounded-lg border border-gray-300 cursor-pointer"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Talla
-                    </label>
-                    <select
-                      value={shirt3D.size}
-                      onChange={(e) => updateShirt3D('size', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="XS">XS</option>
-                      <option value="S">S</option>
-                      <option value="M">M</option>
-                      <option value="L">L</option>
-                      <option value="XL">XL</option>
-                      <option value="XXL">XXL</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Material
-                    </label>
-                    <select
-                      value={shirt3D.material}
-                      onChange={(e) => updateShirt3D('material', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="cotton">Algodón</option>
-                      <option value="polyester">Poliéster</option>
-                      <option value="blend">Mezcla</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {generatedImages.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-xl p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <span className="bg-yellow-100 p-2 rounded-lg mr-3">🎨</span>
-                    Diseños Generados
-                  </h2>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {generatedImages.map((image) => (
-                      <div
-                        key={image.id}
-                        className={`relative group cursor-pointer rounded-xl overflow-hidden transition-all ${
-                          currentDesign?.id === image.id
-                            ? 'ring-4 ring-purple-500 scale-105'
-                            : 'hover:scale-105'
-                        }`}
-                        onClick={() => {
-                          setCurrentDesign(image);
-                          updateShirt3D('design', image);
-                        }}
-                      >
-                        <img
-                          src={image.url}
-                          alt={`Diseño: ${image.prompt}`}
-                          className="w-full h-32 object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                        <div className="absolute bottom-2 left-2 right-2">
-                          <div className="bg-white/90 rounded-lg p-2">
-                            <p className="text-xs font-medium text-gray-800 truncate">
-                              {image.prompt}
-                            </p>
-                            <p className="text-xs text-gray-600">
-                              ${image.cost} MXN • {image.provider}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="space-y-6">
@@ -949,44 +674,10 @@ const Design = () => {
                   </button>
                 </div>
               </div>
-
-              {currentDesign && (
-                <div className="bg-white rounded-2xl shadow-xl p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                    <span className="bg-orange-100 p-2 rounded-lg mr-3">ℹ️</span>
-                    Diseño Actual
-                  </h3>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Prompt:</label>
-                      <p className="text-gray-900">{currentDesign.prompt}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Estilo:</label>
-                      <p className="text-gray-900 capitalize">{currentDesign.style}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Paleta:</label>
-                      <p className="text-gray-900 capitalize">{currentDesign.palette}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Proveedor:</label>
-                      <p className="text-gray-900 capitalize">{currentDesign.provider}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Costo:</label>
-                      <p className="text-gray-900 font-semibold">${currentDesign.cost} MXN</p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
       </div>
     </>
   );
-};
-
-export default Design;
+}
