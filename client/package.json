@@ -10,20 +10,22 @@
     "export": "next export"
   },
   "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
+    "axios": "^1.6.0",
+    "lucide-react": "^0.292.0",
     "next": "14.0.0",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "@react-three/fiber": "^8.15.0",
-    "@react-three/drei": "^9.88.0",
-    "three": "^0.158.0",
     "react-colorful": "^5.6.1",
-    "lucide-react": "^0.292.0",
-    "axios": "^1.6.0"
+    "react-dom": "18.2.0",
+    "stats-gl": "^3.6.0",
+    "three": "^0.180.0",
+    "three-mesh-bvh": "^0.9.1"
   },
   "devDependencies": {
+    "autoprefixer": "^10.4.16",
     "eslint": "8.53.0",
     "eslint-config-next": "14.0.0",
-    "autoprefixer": "^10.4.16",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5"
   },
