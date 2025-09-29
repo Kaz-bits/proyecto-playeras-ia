@@ -1,0 +1,18 @@
+.designCard {
+  transition: all 0.3s ease;
+}
+
+.designCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.likeButton:hover {
+  animation: pulse 0.3s ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
