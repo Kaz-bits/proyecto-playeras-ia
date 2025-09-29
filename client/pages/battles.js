@@ -136,10 +136,6 @@ const Battles = () => {
         <title>Duelos de Diseño - Proyecto Playeras IA</title>
         <meta name="description" content="Participa en épicas batallas de diseño y vota por tu favorito" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </Head>
       
       <style jsx global>{`
