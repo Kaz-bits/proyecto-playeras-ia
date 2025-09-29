@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import styles from '../styles/Gallery.module.css';
 
 const Gallery = () => {
   const [designs, setDesigns] = useState([]);
@@ -8,7 +9,7 @@ const Gallery = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Datos de ejemplo para la galería
+  // Datos de ejemplo para la galería (sin cambios en la lógica)
   const mockDesigns = [
     {
       id: 1,
@@ -123,34 +124,11 @@ const Gallery = () => {
         <title>Galería de la Comunidad - Proyecto Playeras IA</title>
         <meta name="description" content="Explora diseños únicos creados por nuestra comunidad" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        {/* ELIMINADO: script de Tailwind CDN */}
+        {/* ELIMINADO: Links de Google Fonts - ahora están en _document.js */}
       </Head>
       
-      <style jsx global>{`
-        body {
-          font-family: 'Inter', sans-serif;
-          background-color: #111827;
-          color: #F9FAFB;
-        }
-        .design-card {
-          transition: all 0.3s ease;
-        }
-        .design-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-        .like-button:hover {
-          animation: pulse 0.3s ease-in-out;
-        }
-        @keyframes pulse {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); }
-        }
-      `}</style>
+      {/* ELIMINADO: style jsx global - ahora usa módulos CSS o clases de Tailwind */}
 
       <div className="min-h-screen bg-gray-900">
         {/* Header */}
@@ -163,12 +141,18 @@ const Gallery = () => {
                   <path d="M2 17l10 5 10-5"/>
                   <path d="M2 12l10 5 10-5"/>
                 </svg>
-                <span className="ml-3 text-2xl font-bold">ImagiTee</span>
+                <span className="ml-3 text-2xl font-bold text-white">ImagiTee</span>
               </Link>
               <nav className="flex items-center space-x-6 text-sm font-medium text-gray-300">
-                <Link href="/design" className="hover:text-indigo-400 transition-colors">Diseñar</Link>
-                <Link href="/gallery" className="text-indigo-400">Galería</Link>
-                <Link href="/faq" className="hover:text-indigo-400 transition-colors">FAQ</Link>
+                <Link href="/designer" className="hover:text-indigo-400 transition-colors">
+                  Diseñar
+                </Link>
+                <Link href="/gallery" className="text-indigo-400">
+                  Galería
+                </Link>
+                <Link href="/faq" className="hover:text-indigo-400 transition-colors">
+                  FAQ
+                </Link>
                 <Link href="/cart" className="relative hover:text-indigo-400 transition-colors">
                   <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="9" cy="21" r="1"/>
@@ -202,7 +186,7 @@ const Gallery = () => {
                   placeholder="Buscar diseños, etiquetas..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
                 />
                 <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -238,25 +222,25 @@ const Gallery = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredDesigns.map(design => (
-                <div key={design.id} className="design-card bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
+                <div key={design.id} className={`${styles.designCard} bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:transform hover:translate-y-[-5px] hover:shadow-2xl transition-all duration-300`}>
                   <div className="relative">
                     <img
                       src={design.image}
                       alt={design.title}
                       className="w-full h-48 object-cover"
                     />
-                    <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1 text-xs">
+                    <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1 text-xs text-white">
                       {design.aiProvider === 'midjourney' ? '🎨 MJ' : '🔷 GM'}
                     </div>
                   </div>
                   
                   <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-2">{design.title}</h3>
+                    <h3 className="font-semibold text-lg mb-2 text-white">{design.title}</h3>
                     <p className="text-gray-400 text-sm mb-2">por {design.author}</p>
                     
                     <div className="flex flex-wrap gap-1 mb-3">
                       {design.tags.map(tag => (
-                        <span key={tag} className="bg-gray-700 text-xs px-2 py-1 rounded-full">
+                        <span key={tag} className="bg-gray-700 text-xs px-2 py-1 rounded-full text-gray-300">
                           #{tag}
                         </span>
                       ))}
@@ -266,7 +250,7 @@ const Gallery = () => {
                       <div className="flex items-center space-x-4 text-sm text-gray-400">
                         <button 
                           onClick={() => handleLike(design.id)}
-                          className="like-button flex items-center space-x-1 hover:text-red-400 transition"
+                          className="flex items-center space-x-1 hover:text-red-400 transition"
                         >
                           <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -287,7 +271,7 @@ const Gallery = () => {
                     </div>
                     
                     <div className="mt-3 flex gap-2">
-                      <Link href={`/design?template=${design.id}`} className="flex-1">
+                      <Link href={`/designer?template=${design.id}`} className="flex-1">
                         <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition text-sm">
                           🎨 Personalizar
                         </button>
@@ -305,7 +289,7 @@ const Gallery = () => {
           {filteredDesigns.length === 0 && !loading && (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-xl font-semibold mb-2">No se encontraron diseños</h3>
+              <h3 className="text-xl font-semibold mb-2 text-white">No se encontraron diseños</h3>
               <p className="text-gray-400">Intenta con otros términos de búsqueda</p>
             </div>
           )}
