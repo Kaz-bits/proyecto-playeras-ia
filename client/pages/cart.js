@@ -124,14 +124,6 @@ const Cart = () => {
         <meta name="description" content="Revisa tu carrito y completa tu compra" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
-      
-      <style jsx global>{`
-        body {
-          font-family: 'Inter', sans-serif;
-          background-color: #111827;
-          color: #F9FAFB;
-        }
-      `}</style>
 
       <div className="min-h-screen bg-gray-900">
         {/* Header */}
