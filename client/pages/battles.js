@@ -138,38 +138,6 @@ const Battles = () => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
       
-      <style jsx global>{`
-        body {
-          font-family: 'Inter', sans-serif;
-          background-color: #111827;
-          color: #F9FAFB;
-        }
-        .battle-card {
-          transition: all 0.3s ease;
-        }
-        .battle-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
-        }
-        .vote-button {
-          transition: all 0.3s ease;
-        }
-        .vote-button:hover {
-          transform: scale(1.05);
-          box-shadow: 0 10px 30px rgba(79, 70, 229, 0.4);
-        }
-        .percentage-bar {
-          transition: width 0.5s ease;
-        }
-        @keyframes pulse-glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
-          50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.8); }
-        }
-        .ending-soon {
-          animation: pulse-glow 2s infinite;
-        }
-      `}</style>
-
       <div className="min-h-screen bg-gray-900">
         {/* Header */}
         <header className="bg-gray-900/80 backdrop-blur-sm border-b border-gray-700">
