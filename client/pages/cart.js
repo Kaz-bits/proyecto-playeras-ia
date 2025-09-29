@@ -123,10 +123,6 @@ const Cart = () => {
         <title>Carrito de Compras - Proyecto Playeras IA</title>
         <meta name="description" content="Revisa tu carrito y completa tu compra" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
       
       <style jsx global>{`
